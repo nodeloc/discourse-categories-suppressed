@@ -2,3 +2,8 @@ plugins:
   categories_suppressed_from_latest:
     type: category_list
     default: ""
+    description: "Categories to suppress from latest topics page"
+  categories_suppressed_exception_groups:
+    type: group_list
+    default: ""
+    description: "User groups whose topics will not be suppressed from latest page"

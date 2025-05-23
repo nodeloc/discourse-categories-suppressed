@@ -15,7 +15,27 @@ after_initialize do
         if category_ids.blank? || list_type != :latest || options[:category] || options[:tags]
           result
         else
-          result.where("topics.category_id NOT IN (#{category_ids.join(",")})")
+          # 获取例外用户组的 topics
+          exception_group_ids =
+            (SiteSetting.categories_suppressed_exception_groups.presence || "").split("|").map(
+              &:to_i
+            )
+
+          if exception_group_ids.present?
+            # 查找属于例外用户组的用户ID
+            exception_user_ids = GroupUser.where(group_id: exception_group_ids).pluck(:user_id)
+
+            if exception_user_ids.present?
+              # 排除被压制的分类，但保留例外用户组成员的 topics
+              result.where(
+                "topics.category_id NOT IN (#{category_ids.join(",")}) OR topics.user_id IN (#{exception_user_ids.join(",")})",
+              )
+            else
+              result.where("topics.category_id NOT IN (#{category_ids.join(",")})")
+            end
+          else
+            result.where("topics.category_id NOT IN (#{category_ids.join(",")})")
+          end
         end
       end
 
